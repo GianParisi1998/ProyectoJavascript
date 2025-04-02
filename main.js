@@ -1,143 +1,267 @@
 // Constructor para los videojuegos
-const Videojuego = function(nombre, consola, precio, stock) {
-  this.nombre = nombre;
-  this.consola = consola;
-  this.precio = precio;
-  this.stock = stock;
-};
-
-// Catálogo inicial de videojuegos
-let lista = [
-  new Videojuego("God of War Ragnarök", "PS5", 59990, 15),
-  new Videojuego("The Last of Us Part II", "PS4", 39990, 20),
-  new Videojuego("Spider-Man 2", "PS5", 64990, 10),
-  new Videojuego("Gran Turismo 7", "PS4", 49990, 12)
-];
-
-// ---------- FILTRAR PRODUCTOS ----------
-function filtrarProductos() {
-  let palabraClave = prompt("Ingresa el videojuego que buscas").trim().toUpperCase();
-  let resultado = lista.filter((x) => x.nombre.toUpperCase().includes(palabraClave));
-  resultado.length > 0 
-    ? mostrarResultados(resultado) 
-    : alert("No se encontraron coincidencias");
-  mostrarMenu();
+class Videojuego {
+  constructor(nombre, consola, precio, stock) {
+      this.nombre = nombre;
+      this.consola = consola;
+      this.precio = precio;
+      this.stock = stock;
+  }
 }
 
-// ---------- AGREGAR PRODUCTO ----------
-function agregarProducto() {
-  let nombre, consola, precio, stock;
-  
-  nombre = prompt("Ingresa el nombre del videojuego").trim();
-  while (nombre === "") {
-    nombre = prompt("El nombre no puede estar vacío. Ingresa el nombre del videojuego").trim();
-  }
+// Variables globales
+let listaVideojuegos = [];
+let gameToDeleteIndex = null;
 
-  consola = prompt("Ingresa la consola (PS3, PS4 o PS5)").trim().toUpperCase();
-  while (consola !== "PS3" && consola !== "PS4" && consola !== "PS5") {
-    consola = prompt("Consola inválida. Ingresa PS3, PS4 o PS5").trim().toUpperCase();
-  }
+// Elementos del DOM
+const searchInput = document.getElementById('searchInput');
+const searchButton = document.getElementById('searchButton');
+const gameForm = document.getElementById('gameForm');
+const formMode = document.getElementById('formMode');
+const editIndex = document.getElementById('editIndex');
+const resetButton = document.getElementById('resetButton');
+const videojuegosContainer = document.getElementById('videojuegos-container');
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+const confirmDeleteBtn = document.getElementById('confirmDelete');
+const deleteGameNameSpan = document.getElementById('deleteGameName');
+const notificationToast = new bootstrap.Toast(document.getElementById('notificationToast'));
+const toastMessage = document.getElementById('toastMessage');
 
-  precio = parseFloat(prompt("Ingresa el precio del videojuego"));
-  while (isNaN(precio) || precio <= 0) {
-    precio = parseFloat(prompt("Precio inválido. Ingresa un precio mayor a 0"));
-  }
+// Cargar datos del localStorage al iniciar
+document.addEventListener('DOMContentLoaded', () => {
+  cargarDesdeLocalStorage();
+  renderizarVideojuegos(listaVideojuegos);
+});
 
-  stock = parseInt(prompt("Ingresa el stock del videojuego"));
-  while (isNaN(stock) || stock < 0) {
-    stock = parseInt(prompt("Stock inválido. Ingresa un número mayor o igual a 0"));
-  }
-
-  let producto = new Videojuego(nombre, consola, precio, stock);
-  lista.push(producto);
-  mostrarResultados(lista);
-  mostrarMenu();
+// Guardar en localStorage
+function guardarEnLocalStorage() {
+  localStorage.setItem('catalogoVideojuegos', JSON.stringify(listaVideojuegos));
 }
 
-// ---------- ELIMINAR PRODUCTO ----------
-function eliminarProducto() {
-  let nombre = prompt("Ingresa el nombre del videojuego a eliminar").trim().toUpperCase();
-  let index = lista.findIndex((p) => p.nombre.toUpperCase() === nombre);
+// Cargar desde localStorage
+function cargarDesdeLocalStorage() {
+  const datosGuardados = localStorage.getItem('catalogoVideojuegos');
   
-  if (index === -1) {
-    alert("Videojuego no encontrado.");
+  if (datosGuardados) {
+      listaVideojuegos = JSON.parse(datosGuardados);
   } else {
-    let productoEliminado = lista.splice(index, 1)[0];
-    alert(`Videojuego eliminado: ${productoEliminado.nombre}`);
-    mostrarResultados(lista);
+      // Catálogo inicial de videojuegos si no hay datos guardados
+      listaVideojuegos = [
+          new Videojuego("God of War Ragnarök", "PS5", 59990, 15),
+          new Videojuego("The Last of Us Part II", "PS4", 39990, 20),
+          new Videojuego("Spider-Man 2", "PS5", 64990, 10),
+          new Videojuego("Gran Turismo 7", "PS4", 49990, 12)
+      ];
+      guardarEnLocalStorage();
   }
-  mostrarMenu();
 }
 
-// ---------- MODIFICAR PRODUCTO ----------
-function modificarProducto() {
-  let nombre = prompt("Ingresa el nombre del videojuego a modificar").trim().toUpperCase();
-  let producto = lista.find((p) => p.nombre.toUpperCase() === nombre);
-  
-  if (!producto) {
-    alert("Videojuego no encontrado.");
-    mostrarMenu();
-    return;
-  }
-
-  let precioInput = prompt(`Precio actual: ${producto.precio}. Nuevo precio (deja vacío para no cambiar)`);
-  let nuevoPrecio = precioInput === "" ? producto.precio : parseFloat(precioInput);
-  while (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
-    precioInput = prompt("Precio inválido. Ingresa un precio mayor a 0");
-    nuevoPrecio = precioInput === "" ? producto.precio : parseFloat(precioInput);
-  }
-
-  let stockInput = prompt(`Stock actual: ${producto.stock}. Nuevo stock (deja vacío para no cambiar)`);
-  let nuevoStock = stockInput === "" ? producto.stock : parseInt(stockInput);
-  while (isNaN(nuevoStock) || nuevoStock < 0) {
-    stockInput = prompt("Stock inválido. Ingresa un número mayor o igual a 0");
-    nuevoStock = stockInput === "" ? producto.stock : parseInt(stockInput);
-  }
-
-  producto.precio = nuevoPrecio;
-  producto.stock = nuevoStock;
-  alert(`Videojuego modificado: ${producto.nombre}`);
-  mostrarResultados(lista);
-  mostrarMenu();
-}
-
-// ---------- MOSTRAR RESULTADOS ----------
-function mostrarResultados(resultados) {
-  console.table(resultados);
-}
-
-// ---------- MOSTRAR MENÚ ----------
-function mostrarMenu() {
-  let opcion = prompt(`
-    Selecciona una opción:
-    1. Filtrar Productos
-    2. Agregar Producto
-    3. Eliminar Producto
-    4. Modificar Producto
-    5. Salir
-  `);
-
-  switch(opcion) {
-    case "1":
+// Event Listeners
+searchButton.addEventListener('click', filtrarProductos);
+searchInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
       filtrarProductos();
-      break;
-    case "2":
-      agregarProducto();
-      break;
-    case "3":
-      eliminarProducto();
-      break;
-    case "4":
-      modificarProducto();
-      break;
-    case "5":
-      alert("Gracias por usar el catálogo de videojuegos.");
-      break;
-    default:
-      alert("Opción inválida. Intenta de nuevo.");
-      mostrarMenu();
+  }
+});
+
+gameForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const nombre = document.getElementById('nombre').value.trim();
+  const consola = document.getElementById('consola').value;
+  const precio = parseFloat(document.getElementById('precio').value);
+  const stock = parseInt(document.getElementById('stock').value);
+  
+  if (formMode.value === 'add') {
+      agregarProducto(nombre, consola, precio, stock);
+  } else {
+      modificarProducto(parseInt(editIndex.value), nombre, consola, precio, stock);
+  }
+});
+
+resetButton.addEventListener('click', resetearFormulario);
+
+confirmDeleteBtn.addEventListener('click', () => {
+  eliminarProducto(gameToDeleteIndex);
+  deleteModal.hide();
+});
+
+// Función para filtrar productos
+function filtrarProductos() {
+  const palabraClave = searchInput.value.trim().toUpperCase();
+  
+  if (palabraClave === '') {
+      renderizarVideojuegos(listaVideojuegos);
+      return;
+  }
+  
+  const resultado = listaVideojuegos.filter(juego => 
+      juego.nombre.toUpperCase().includes(palabraClave)
+  );
+  
+  if (resultado.length > 0) {
+      renderizarVideojuegos(resultado);
+  } else {
+      mostrarNotificacion('No se encontraron coincidencias', 'bg-warning');
+      renderizarVideojuegos([]);
   }
 }
 
-// Iniciar la aplicación
-mostrarMenu();
+// Función para agregar producto
+function agregarProducto(nombre, consola, precio, stock) {
+  const nuevoJuego = new Videojuego(nombre, consola, precio, stock);
+  listaVideojuegos.push(nuevoJuego);
+  
+  guardarEnLocalStorage();
+  renderizarVideojuegos(listaVideojuegos);
+  resetearFormulario();
+  
+  mostrarNotificacion(`Videojuego "${nombre}" agregado correctamente`, 'bg-success');
+}
+
+// Función para eliminar producto
+function eliminarProducto(index) {
+  if (index !== null && index >= 0 && index < listaVideojuegos.length) {
+      const productoEliminado = listaVideojuegos.splice(index, 1)[0];
+      guardarEnLocalStorage();
+      renderizarVideojuegos(listaVideojuegos);
+      
+      mostrarNotificacion(`Videojuego "${productoEliminado.nombre}" eliminado correctamente`, 'bg-danger');
+  }
+}
+
+// Función para modificar producto
+function modificarProducto(index, nombre, consola, precio, stock) {
+  if (index >= 0 && index < listaVideojuegos.length) {
+      const juegoModificado = listaVideojuegos[index];
+      
+      juegoModificado.nombre = nombre;
+      juegoModificado.consola = consola;
+      juegoModificado.precio = precio;
+      juegoModificado.stock = stock;
+      
+      guardarEnLocalStorage();
+      renderizarVideojuegos(listaVideojuegos);
+      resetearFormulario();
+      
+      mostrarNotificacion(`Videojuego "${nombre}" modificado correctamente`, 'bg-success');
+  }
+}
+
+// Función para cargar datos al formulario para editar
+function cargarFormularioEdicion(index) {
+  if (index >= 0 && index < listaVideojuegos.length) {
+      const juego = listaVideojuegos[index];
+      
+      document.getElementById('nombre').value = juego.nombre;
+      document.getElementById('consola').value = juego.consola;
+      document.getElementById('precio').value = juego.precio;
+      document.getElementById('stock').value = juego.stock;
+      
+      formMode.value = 'edit';
+      editIndex.value = index;
+      document.getElementById('saveButton').textContent = 'Actualizar';
+  }
+}
+
+// Función para resetear el formulario
+function resetearFormulario() {
+  gameForm.reset();
+  formMode.value = 'add';
+  editIndex.value = '';
+  document.getElementById('saveButton').textContent = 'Guardar';
+}
+
+// Función para confirmar eliminación
+function confirmarEliminacion(index) {
+  if (index >= 0 && index < listaVideojuegos.length) {
+      gameToDeleteIndex = index;
+      deleteGameNameSpan.textContent = listaVideojuegos[index].nombre;
+      deleteModal.show();
+  }
+}
+
+// Función para mostrar notificación
+function mostrarNotificacion(mensaje, colorClass) {
+  document.getElementById('notificationToast').className = 'toast align-items-center text-white ' + colorClass;
+  toastMessage.textContent = mensaje;
+  notificationToast.show();
+}
+
+// Función para renderizar los videojuegos en el DOM
+function renderizarVideojuegos(juegos) {
+  videojuegosContainer.innerHTML = '';
+  
+  juegos.forEach((juego, index) => {
+      // Crear tarjeta para cada videojuego
+      const card = document.createElement('div');
+      card.className = 'col-md-6 col-lg-4 game-card';
+      
+      // Aplicar color de fondo según la consola
+      let cardColor = '';
+      switch (juego.consola) {
+          case 'PS3':
+              cardColor = 'border-primary';
+              break;
+          case 'PS4':
+              cardColor = 'border-success';
+              break;
+          case 'PS5':
+              cardColor = 'border-danger';
+              break;
+          default:
+              cardColor = 'border-secondary';
+      }
+      
+      card.innerHTML = `
+          <div class="card h-100 ${cardColor} shadow">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                  <span class="badge bg-${cardColor.replace('border-', '')}">${juego.consola}</span>
+                  <div>
+                      <button class="btn btn-sm btn-warning edit-btn" data-index="${index}">
+                          <i class="bi bi-pencil"></i> Editar
+                      </button>
+                      <button class="btn btn-sm btn-danger delete-btn" data-index="${index}">
+                          <i class="bi bi-trash"></i> Eliminar
+                      </button>
+                  </div>
+              </div>
+              <div class="card-body">
+                  <h5 class="card-title">${juego.nombre}</h5>
+                  <div class="d-flex justify-content-between">
+                      <span class="fw-bold">Precio: $${juego.precio.toLocaleString()}</span>
+                      <span class="badge bg-${juego.stock > 0 ? 'success' : 'danger'}">
+                          Stock: ${juego.stock}
+                      </span>
+                  </div>
+              </div>
+          </div>
+      `;
+      
+      videojuegosContainer.appendChild(card);
+  });
+  
+  // Asignar event listeners a los botones de editar y eliminar
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.closest('.edit-btn').dataset.index);
+          cargarFormularioEdicion(index);
+      });
+  });
+  
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+          const index = parseInt(e.target.closest('.delete-btn').dataset.index);
+          confirmarEliminacion(index);
+      });
+  });
+  
+  // Mensaje cuando no hay juegos
+  if (juegos.length === 0) {
+      videojuegosContainer.innerHTML = `
+          <div class="col-12 text-center py-5">
+              <h3 class="text-muted">No hay videojuegos para mostrar</h3>
+              <p>Agrega nuevos juegos usando el formulario</p>
+          </div>
+      `;
+  }
+}
