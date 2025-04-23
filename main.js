@@ -211,7 +211,7 @@ function renderizarVideojuegos(juegos) {
           default:
               cardColor = 'border-secondary';
       }
-      
+    
       card.innerHTML = `
           <div class="card h-100 ${cardColor} shadow">
               <div class="card-header d-flex justify-content-between align-items-center">
